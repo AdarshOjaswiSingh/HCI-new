@@ -98,7 +98,7 @@ def load_database():
 def main():
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Interview Mode", "Download Conversation", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Interview Mode", "Download Conversation", "About"])
 
     if options == "Home":
         st.header("Welcome to the Infosys Project Dashboard")
@@ -108,11 +108,6 @@ def main():
     elif options == "Data Upload":
         upload_data()
     
-    elif options == "Database":
-        st.header("Permanent Database")
-        database = load_database()
-        st.dataframe(database)
-
     elif options == "Interview Mode":
         st.header("Interview Mode: Conversational Format")
         database = load_database()
@@ -156,7 +151,7 @@ def main():
     
     elif options == "About":
         st.header("About This App")
-        st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis. Using NLP, it delivers real-time insights into candidate communication and expertise, while a cultural fit scoring system evaluates alignment with organizational values. This scalable, AI-powered solution ensures faster, data-driven hiring decisions with improved precision.")
+        st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis.")
         st.write("Author: Adarsh Ojaswi Singh")
 
 if __name__ == "__main__":
