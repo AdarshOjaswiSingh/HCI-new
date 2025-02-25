@@ -27,13 +27,17 @@ def save_database(data):
     except Exception as e:
         st.error(f"Failed to save the database: {e}")
 
-def ask_question(role, database):
+def ask_question(role):
     try:
-        questions = database[database["Role"] == role]["Question"].tolist()
-        if questions:
-            return random.choice(questions)
+        database = load_database()
+        if "Role" in database.columns and "Question" in database.columns:
+            questions = database[database["Role"] == role]["Question"].dropna().tolist()
+            if questions:
+                return random.choice(questions)
+            else:
+                return "No questions available for this role."
         else:
-            return "No questions available for this role."
+            return "Database format is incorrect. Ensure it has 'Role' and 'Question' columns."
     except Exception as e:
         st.error(f"Error fetching question: {e}")
         return ""
@@ -69,11 +73,10 @@ def main():
 
     elif options == "Interview Mode":
         st.header("Interview Question Mode")
-        database = load_database()
         role = st.selectbox("Select the role you are applying for:", ["Data Analytics", "Software Development", "AI/ML Engineering"])
         if st.button("Start Interview"):
             if role:
-                question = ask_question(role, database)
+                question = ask_question(role)
                 st.session_state.question = question
         
         if "question" in st.session_state:
