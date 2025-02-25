@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import random
 
-DB_PATH = "/mnt/data/Updated_Candidate_Data.xlsx"
+DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
 
 def load_database():
     try:
