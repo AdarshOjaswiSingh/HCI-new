@@ -3,12 +3,17 @@ import pandas as pd
 import os
 import random
 
-DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
+DB_PATH = "/mnt/data/Updated_Candidate_Data.xlsx"
 
 def load_database():
     try:
         if os.path.exists(DB_PATH):
-            return pd.read_excel(DB_PATH)
+            df = pd.read_excel(DB_PATH)
+            required_columns = ["Role", "Question"]
+            if not all(col in df.columns for col in required_columns):
+                st.error("Database format is incorrect. Ensure it has 'Role' and 'Question' columns.")
+                return pd.DataFrame(columns=required_columns)
+            return df
         else:
             st.warning("Database not found! Initializing a new database.")
             empty_df = pd.DataFrame(columns=["Role", "Question"])  # Ensure correct format
@@ -28,14 +33,14 @@ def save_database(data):
 def ask_question(role):
     try:
         database = load_database()
-        if "Role" in database.columns and "Question" in database.columns:
+        if not database.empty:
             questions = database[database["Role"] == role]["Question"].dropna().tolist()
             if questions:
                 return random.choice(questions)
             else:
                 return "No questions available for this role."
         else:
-            return "Database format is incorrect. Ensure it has 'Role' and 'Question' columns."
+            return "Database is empty or incorrectly formatted."
     except Exception as e:
         st.error(f"Error fetching question: {e}")
         return ""
@@ -57,10 +62,14 @@ def main():
 
     elif options == "Interview Mode":
         st.header("Interview Question Mode")
-        role = st.selectbox("Select the role you are applying for:",
-                            ['Data Scientist', 'Software Engineer', 'Product Manager', 'Data Engineer', 'Data Analyst', 'UI Designer'])
+        database = load_database()
+        roles = database["Role"].dropna().unique().tolist()
+        if not roles:
+            roles = ["No roles available"]
+        role = st.selectbox("Select the role you are applying for:", roles)
+        
         if st.button("Start Interview"):
-            if role:
+            if role and role != "No roles available":
                 question = ask_question(role)
                 st.session_state.question = question
         
