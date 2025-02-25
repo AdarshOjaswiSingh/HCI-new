@@ -6,7 +6,6 @@ from PyPDF2 import PdfReader
 from docx import Document
 
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
-CONVERSATION_HISTORY = []
 
 def extract_pdf_text(file):
     try:
@@ -24,27 +23,37 @@ def extract_word_text(file):
         st.error(f"Error reading Word document: {e}")
         return ""
 
-def summarize_text(text):
-    sentences = text.split(". ")
-    summary = " ".join(sentences[:3]) if len(sentences) > 3 else text
-    return summary
+def extract_resume_details(text):
+    """Extracts only Skills, Achievements, Experiences, and Projects."""
+    lines = text.split("\n")
+    summary_sections = ["Skills", "Achievements", "Experience", "Projects"]
+    extracted_info = {section: [] for section in summary_sections}
+
+    current_section = None
+    for line in lines:
+        line = line.strip()
+        if any(line.lower().startswith(sec.lower()) for sec in summary_sections):
+            current_section = line
+        elif current_section:
+            extracted_info[current_section].append(line)
+
+    return {key: "\n".join(value) for key, value in extracted_info.items() if value}
 
 def upload_data():
     st.header("Upload Resume for Summary")
     uploaded_file = st.file_uploader("Upload a file (PDF, DOCX)", type=["pdf", "docx"])
     if uploaded_file:
         try:
-            if uploaded_file.name.endswith(".pdf"):
-                text = extract_pdf_text(uploaded_file)
-            elif uploaded_file.name.endswith(".docx"):
-                text = extract_word_text(uploaded_file)
-            else:
-                st.error("Unsupported file type!")
-                return
+            text = extract_pdf_text(uploaded_file) if uploaded_file.name.endswith(".pdf") else extract_word_text(uploaded_file)
+            summary = extract_resume_details(text)
             
-            summary = summarize_text(text)
             st.subheader("Resume Summary")
-            st.write(summary)
+            for section, content in summary.items():
+                st.write(f"**{section}**")
+                st.write(content)
+            
+            # Store summary in session for download
+            st.session_state.resume_summary = summary
         except Exception as e:
             st.error(f"Error processing file: {e}")
 
@@ -116,12 +125,22 @@ def main():
 
     elif options == "Download Conversation":
         st.header("Download Interview Transcript")
-        if "conversation" in st.session_state and st.session_state.conversation:
-            conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
-            st.download_button(label="Download Transcript", data=conversation_text, file_name="interview_transcript.txt", mime="text/plain")
+
+        # Prepare interview transcript
+        conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.get("conversation", [])])
+        
+        # Prepare resume summary if available
+        resume_summary = st.session_state.get("resume_summary", {})
+        resume_text = "\n\n".join([f"**{key}**:\n{value}" for key, value in resume_summary.items()])
+
+        # Combine interview transcript and resume summary
+        full_text = f"### Resume Summary:\n{resume_text}\n\n### Interview Transcript:\n{conversation_text}" if resume_summary else f"### Interview Transcript:\n{conversation_text}"
+        
+        if full_text.strip():
+            st.download_button(label="Download Full Report", data=full_text, file_name="recruitment_report.txt", mime="text/plain")
         else:
-            st.warning("No conversation available to download.")
-    
+            st.warning("No data available to download.")
+
     elif options == "About":
         st.header("About This App")
         st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis. Using NLP, it delivers real-time insights into candidate communication and expertise, while a cultural fit scoring system evaluates alignment with organizational values. This scalable, AI-powered solution ensures faster, data-driven hiring decisions with improved precision.")
