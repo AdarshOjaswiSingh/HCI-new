@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
 import os
-from PyPDF2 import PdfReader
-from docx import Document
 import random
 
-DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
+DB_PATH = "/mnt/data/Updated_Candidate_Data.xlsx"
 
 def load_database():
     try:
@@ -13,7 +11,7 @@ def load_database():
             return pd.read_excel(DB_PATH)
         else:
             st.warning("Database not found! Initializing a new database.")
-            empty_df = pd.DataFrame(columns=["Role", "Question", "Answer"])  # Customize as needed
+            empty_df = pd.DataFrame(columns=["Role", "Question"])  # Ensure correct format
             save_database(empty_df)
             return empty_df
     except Exception as e:
@@ -52,20 +50,6 @@ def main():
         st.write("This app is designed to showcase the key features and outputs of my project.")
         st.write("Use the sidebar to navigate through the app.")
 
-    elif options == "Data Upload":
-        st.header("Upload New Data")
-        uploaded_file = st.file_uploader("Upload a file (CSV, PDF, or DOCX)", type=["csv", "pdf", "docx"])
-        if uploaded_file:
-            try:
-                if uploaded_file.type == "text/csv":
-                    data = pd.read_csv(uploaded_file)
-                    st.dataframe(data)
-                    save_database(data)
-                else:
-                    st.error("Unsupported file type!")
-            except Exception as e:
-                st.error(f"Error processing file: {e}")
-
     elif options == "Database":
         st.header("Permanent Database")
         database = load_database()
@@ -73,7 +57,8 @@ def main():
 
     elif options == "Interview Mode":
         st.header("Interview Question Mode")
-        role = st.selectbox("Select the role you are applying for:", ["Data Analytics", "Software Development", "AI/ML Engineering"])
+        role = st.selectbox("Select the role you are applying for:",
+                            ['Data Scientist', 'Software Engineer', 'Product Manager', 'Data Engineer', 'Data Analyst', 'UI Designer'])
         if st.button("Start Interview"):
             if role:
                 question = ask_question(role)
