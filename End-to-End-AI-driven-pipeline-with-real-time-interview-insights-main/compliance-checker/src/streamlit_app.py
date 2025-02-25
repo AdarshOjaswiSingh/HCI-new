@@ -78,7 +78,7 @@ def upload_data():
             st.error(f"Error processing file: {e}")
 
 def main():
-    st.title("Contract Analysis System")
+    st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
     st.sidebar.header("Navigation")
     options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Interview Mode", "Download Conversation", "About"])
 
