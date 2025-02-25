@@ -8,32 +8,6 @@ from docx import Document
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
 CONVERSATION_HISTORY = []
 
-def load_database():
-    try:
-        if os.path.exists(DB_PATH):
-            df = pd.read_excel(DB_PATH)
-            df.columns = df.columns.str.strip()
-            required_columns = ["Role", "Transcript"]
-            if not all(col in df.columns for col in required_columns):
-                st.error("Database format is incorrect. Ensure it has 'Role' and 'Transcript' columns.")
-                return pd.DataFrame(columns=required_columns)
-            return df
-        else:
-            st.warning("Database not found! Initializing a new database.")
-            empty_df = pd.DataFrame(columns=["Role", "Transcript"])
-            save_database(empty_df)
-            return empty_df
-    except Exception as e:
-        st.error(f"Failed to load database: {e}")
-        return pd.DataFrame()
-
-def save_database(data):
-    try:
-        data.to_excel(DB_PATH, index=False)
-        st.success("Database updated successfully!")
-    except Exception as e:
-        st.error(f"Failed to save the database: {e}")
-
 def extract_pdf_text(file):
     try:
         reader = PdfReader(file)
@@ -50,32 +24,46 @@ def extract_word_text(file):
         st.error(f"Error reading Word document: {e}")
         return ""
 
+def summarize_text(text):
+    sentences = text.split(". ")
+    summary = " ".join(sentences[:3]) if len(sentences) > 3 else text
+    return summary
+
 def upload_data():
-    st.header("Upload New Data")
-    uploaded_file = st.file_uploader("Upload a file (CSV, XLSX, PDF, DOCX)", type=["csv", "xlsx", "pdf", "docx"])
+    st.header("Upload Resume for Summary")
+    uploaded_file = st.file_uploader("Upload a file (PDF, DOCX)", type=["pdf", "docx"])
     if uploaded_file:
         try:
-            if uploaded_file.name.endswith(".csv"):
-                data = pd.read_csv(uploaded_file)
-            elif uploaded_file.name.endswith(".xlsx"):
-                data = pd.read_excel(uploaded_file)
-            elif uploaded_file.name.endswith(".pdf"):
+            if uploaded_file.name.endswith(".pdf"):
                 text = extract_pdf_text(uploaded_file)
-                data = pd.DataFrame([["Unknown", text]], columns=["Role", "Transcript"])
             elif uploaded_file.name.endswith(".docx"):
                 text = extract_word_text(uploaded_file)
-                data = pd.DataFrame([["Unknown", text]], columns=["Role", "Transcript"])
             else:
                 st.error("Unsupported file type!")
                 return
             
-            if "Role" in data.columns and "Transcript" in data.columns:
-                save_database(data)
-                st.success("Data uploaded and saved successfully!")
-            else:
-                st.error("Invalid file format. Ensure the file has 'Role' and 'Transcript' columns.")
+            summary = summarize_text(text)
+            st.subheader("Resume Summary")
+            st.write(summary)
         except Exception as e:
             st.error(f"Error processing file: {e}")
+
+def load_database():
+    try:
+        if os.path.exists(DB_PATH):
+            df = pd.read_excel(DB_PATH)
+            df.columns = df.columns.str.strip()
+            required_columns = ["Role", "Transcript"]
+            if not all(col in df.columns for col in required_columns):
+                st.error("Database format is incorrect. Ensure it has 'Role' and 'Transcript' columns.")
+                return pd.DataFrame(columns=required_columns)
+            return df
+        else:
+            st.warning("Database not found! Initializing a new database.")
+            return pd.DataFrame(columns=["Role", "Transcript"])
+    except Exception as e:
+        st.error(f"Failed to load database: {e}")
+        return pd.DataFrame()
 
 def main():
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
