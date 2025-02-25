@@ -64,9 +64,9 @@ def upload_data():
             st.error(f"Error processing file: {e}")
     return None
 
-def query_database(query, database):
+def query_database(query, role, database):
     try:
-        filtered_data = database[database.apply(lambda row: row.astype(str).str.contains(query, case=False, na=False).any(), axis=1)]
+        filtered_data = database[(database['Role'] == role) & database.apply(lambda row: row.astype(str).str.contains(query, case=False, na=False).any(), axis=1)]
         return filtered_data
     except Exception as e:
         st.error(f"Error querying database: {e}")
@@ -103,10 +103,11 @@ def main():
     elif options == "Query Data":
         st.header("Query the Database")
         database = load_database()
+        role = st.selectbox("Select the role you are applying for:", ["Data Analytics", "Software Development", "AI/ML Engineering"])
         query = st.text_input("Enter your query:")
         if st.button("Search"):
             if query:
-                results = query_database(query, database)
+                results = query_database(query, role, database)
                 st.dataframe(results)
             else:
                 st.warning("Please enter a query to search!")
