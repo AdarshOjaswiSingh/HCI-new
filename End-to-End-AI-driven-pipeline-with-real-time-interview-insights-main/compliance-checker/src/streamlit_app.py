@@ -78,7 +78,7 @@ def upload_data():
             st.error(f"Error processing file: {e}")
 
 def main():
-    st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
+    st.title("Contract Analysis System")
     st.sidebar.header("Navigation")
     options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Interview Mode", "Download Conversation", "About"])
 
@@ -95,7 +95,7 @@ def main():
         database = load_database()
         st.dataframe(database)
 
-    elif options == "Interview":
+    elif options == "Interview Mode":
         st.header("Interview Mode: Conversational Format")
         database = load_database()
         roles = database["Role"].dropna().unique().tolist() if not database.empty else []
@@ -126,7 +126,7 @@ def main():
                 else:
                     st.warning("Please provide an answer before submitting.")
 
-    elif options == "Download Final Transcript":
+    elif options == "Download Conversation":
         st.header("Download Interview Transcript")
         if "conversation" in st.session_state and st.session_state.conversation:
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
