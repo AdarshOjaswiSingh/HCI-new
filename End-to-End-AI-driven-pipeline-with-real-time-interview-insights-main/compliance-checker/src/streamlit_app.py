@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from PyPDF2 import PdfReader
 from docx import Document
+import random
 
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
 
@@ -12,7 +13,7 @@ def load_database():
             return pd.read_excel(DB_PATH)
         else:
             st.warning("Database not found! Initializing a new database.")
-            empty_df = pd.DataFrame(columns=["Column1", "Column2", "Column3"])  # Customize as needed
+            empty_df = pd.DataFrame(columns=["Role", "Question", "Answer"])  # Customize as needed
             save_database(empty_df)
             return empty_df
     except Exception as e:
@@ -26,56 +27,21 @@ def save_database(data):
     except Exception as e:
         st.error(f"Failed to save the database: {e}")
 
-def extract_pdf_text(file):
+def ask_question(role, database):
     try:
-        reader = PdfReader(file)
-        return ''.join([page.extract_text() for page in reader.pages])
+        questions = database[database["Role"] == role]["Question"].tolist()
+        if questions:
+            return random.choice(questions)
+        else:
+            return "No questions available for this role."
     except Exception as e:
-        st.error(f"Error reading PDF: {e}")
+        st.error(f"Error fetching question: {e}")
         return ""
-
-def extract_word_text(file):
-    try:
-        doc = Document(file)
-        return '\n'.join([para.text for para in doc.paragraphs])
-    except Exception as e:
-        st.error(f"Error reading Word document: {e}")
-        return ""
-
-def upload_data():
-    uploaded_file = st.file_uploader("Upload a file (CSV, PDF, or DOCX)", type=["csv", "pdf", "docx"])
-    if uploaded_file:
-        try:
-            if uploaded_file.type == "text/csv":
-                data = pd.read_csv(uploaded_file)
-                st.dataframe(data)
-                return data
-            elif uploaded_file.type == "application/pdf":
-                text = extract_pdf_text(uploaded_file)
-                st.text_area("PDF Content", text, height=300)
-                return text
-            elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                text = extract_word_text(uploaded_file)
-                st.text_area("Word Content", text, height=300)
-                return text
-            else:
-                st.error("Unsupported file type!")
-        except Exception as e:
-            st.error(f"Error processing file: {e}")
-    return None
-
-def query_database(query, role, database):
-    try:
-        filtered_data = database[(database['Role'] == role) & database.apply(lambda row: row.astype(str).str.contains(query, case=False, na=False).any(), axis=1)]
-        return filtered_data
-    except Exception as e:
-        st.error(f"Error querying database: {e}")
-        return pd.DataFrame()
 
 def main():
     st.title("Contract Analysis System")
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Query Data", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Interview Mode", "About"])
 
     if options == "Home":
         st.header("Welcome to the Infosys Project Dashboard")
@@ -84,34 +50,41 @@ def main():
 
     elif options == "Data Upload":
         st.header("Upload New Data")
-        new_data = upload_data()
-        if new_data is not None:
-            st.session_state.new_data = new_data
+        uploaded_file = st.file_uploader("Upload a file (CSV, PDF, or DOCX)", type=["csv", "pdf", "docx"])
+        if uploaded_file:
+            try:
+                if uploaded_file.type == "text/csv":
+                    data = pd.read_csv(uploaded_file)
+                    st.dataframe(data)
+                    save_database(data)
+                else:
+                    st.error("Unsupported file type!")
+            except Exception as e:
+                st.error(f"Error processing file: {e}")
 
     elif options == "Database":
         st.header("Permanent Database")
         database = load_database()
         st.dataframe(database)
 
-        if st.button("Save Uploaded Data to Database"):
-            if 'new_data' in st.session_state and isinstance(st.session_state.new_data, pd.DataFrame):
-                updated_database = pd.concat([database, st.session_state.new_data], ignore_index=True)
-                save_database(updated_database)
-            else:
-                st.warning("No new data available to save!")
-
-    elif options == "Query Data":
-        st.header("Query the Database")
+    elif options == "Interview Mode":
+        st.header("Interview Question Mode")
         database = load_database()
         role = st.selectbox("Select the role you are applying for:", ["Data Analytics", "Software Development", "AI/ML Engineering"])
-        query = st.text_input("Enter your query:")
-        if st.button("Search"):
-            if query:
-                results = query_database(query, role, database)
-                st.dataframe(results)
-            else:
-                st.warning("Please enter a query to search!")
-    
+        if st.button("Start Interview"):
+            if role:
+                question = ask_question(role, database)
+                st.session_state.question = question
+        
+        if "question" in st.session_state:
+            st.write(f"**Question:** {st.session_state.question}")
+            answer = st.text_area("Your Answer:")
+            if st.button("Submit Answer"):
+                if answer.strip():
+                    st.success("Answer submitted successfully!")
+                else:
+                    st.warning("Please provide an answer before submitting.")
+
     elif options == "About":
         st.header("About This App")
         st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis. Using NLP, it delivers real-time insights into candidate communication and expertise, while a cultural fit scoring system evaluates alignment with organizational values. This scalable, AI-powered solution ensures faster, data-driven hiring decisions with improved precision.")
