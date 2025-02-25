@@ -9,14 +9,15 @@ def load_database():
     try:
         if os.path.exists(DB_PATH):
             df = pd.read_excel(DB_PATH)
-            required_columns = ["Role", "Question"]
+            df.columns = df.columns.str.strip()  # Remove leading/trailing spaces
+            required_columns = ["Role", "Transcript"]
             if not all(col in df.columns for col in required_columns):
-                st.error("Database format is incorrect. Ensure it has 'Role' and 'Question' columns.")
+                st.error("Database format is incorrect. Ensure it has 'Role' and 'Transcript' columns.")
                 return pd.DataFrame(columns=required_columns)
             return df
         else:
             st.warning("Database not found! Initializing a new database.")
-            empty_df = pd.DataFrame(columns=["Role", "Question"])  # Ensure correct format
+            empty_df = pd.DataFrame(columns=["Role", "Transcript"])  # Ensure correct format
             save_database(empty_df)
             return empty_df
     except Exception as e:
@@ -34,7 +35,7 @@ def ask_question(role):
     try:
         database = load_database()
         if not database.empty:
-            questions = database[database["Role"] == role]["Question"].dropna().tolist()
+            questions = database[database["Role"] == role]["Transcript"].dropna().tolist()
             if questions:
                 return random.choice(questions)
             else:
@@ -44,6 +45,24 @@ def ask_question(role):
     except Exception as e:
         st.error(f"Error fetching question: {e}")
         return ""
+
+def upload_data():
+    st.header("Upload New Data")
+    uploaded_file = st.file_uploader("Upload a file (CSV, XLSX)", type=["csv", "xlsx"])
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                data = pd.read_csv(uploaded_file)
+            else:
+                data = pd.read_excel(uploaded_file)
+            
+            if "Role" in data.columns and "Transcript" in data.columns:
+                save_database(data)
+                st.success("Data uploaded and saved successfully!")
+            else:
+                st.error("Invalid file format. Ensure the file has 'Role' and 'Transcript' columns.")
+        except Exception as e:
+            st.error(f"Error processing file: {e}")
 
 def main():
     st.title("Contract Analysis System")
@@ -55,15 +74,18 @@ def main():
         st.write("This app is designed to showcase the key features and outputs of my project.")
         st.write("Use the sidebar to navigate through the app.")
 
+    elif options == "Data Upload":
+        upload_data()
+    
     elif options == "Database":
         st.header("Permanent Database")
         database = load_database()
         st.dataframe(database)
 
     elif options == "Interview Mode":
-        st.header("Interview Question Mode")
+        st.header("Interview Transcript Mode")
         database = load_database()
-        roles = database["Role"].dropna().unique().tolist()
+        roles = database["Role"].dropna().unique().tolist() if not database.empty else []
         if not roles:
             roles = ["No roles available"]
         role = st.selectbox("Select the role you are applying for:", roles)
@@ -74,7 +96,7 @@ def main():
                 st.session_state.question = question
         
         if "question" in st.session_state:
-            st.write(f"**Question:** {st.session_state.question}")
+            st.write(f"**Transcript:** {st.session_state.question}")
             answer = st.text_area("Your Answer:")
             if st.button("Submit Answer"):
                 if answer.strip():
