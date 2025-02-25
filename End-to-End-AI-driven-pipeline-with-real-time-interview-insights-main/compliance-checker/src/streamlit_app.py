@@ -4,6 +4,7 @@ import os
 import random
 
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
+CONVERSATION_HISTORY = []
 
 def load_database():
     try:
@@ -35,9 +36,9 @@ def ask_question(role):
     try:
         database = load_database()
         if not database.empty:
-            questions = database[database["Role"] == role]["Transcript"].dropna().tolist()
-            if questions:
-                return random.choice(questions)
+            transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
+            if transcripts:
+                return random.choice(transcripts)
             else:
                 return "No questions available for this role."
         else:
@@ -67,7 +68,7 @@ def upload_data():
 def main():
     st.title("Contract Analysis System")
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Interview Mode", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Interview Mode", "Download Conversation", "About"])
 
     if options == "Home":
         st.header("Welcome to the Infosys Project Dashboard")
@@ -83,7 +84,7 @@ def main():
         st.dataframe(database)
 
     elif options == "Interview Mode":
-        st.header("Interview Transcript Mode")
+        st.header("Interview Mode: Conversational Format")
         database = load_database()
         roles = database["Role"].dropna().unique().tolist() if not database.empty else []
         if not roles:
@@ -92,18 +93,35 @@ def main():
         
         if st.button("Start Interview"):
             if role and role != "No roles available":
-                question = ask_question(role)
-                st.session_state.question = question
-        
-        if "question" in st.session_state:
-            st.write(f"**Transcript:** {st.session_state.question}")
-            answer = st.text_area("Your Answer:")
+                st.session_state.role = role
+                st.session_state.conversation = []
+                st.session_state.transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
+                if st.session_state.transcripts:
+                    st.session_state.current_question = st.session_state.transcripts.pop(0)
+                    st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+
+        if "current_question" in st.session_state:
+            st.write(f"**Interviewer:** {st.session_state.current_question}")
+            answer = st.text_area("Your Response:")
             if st.button("Submit Answer"):
                 if answer.strip():
-                    st.success("Answer submitted successfully!")
+                    st.session_state.conversation.append(("Candidate", answer))
+                    if st.session_state.transcripts:
+                        st.session_state.current_question = st.session_state.transcripts.pop(0)
+                        st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+                    else:
+                        st.success("Interview completed!")
                 else:
                     st.warning("Please provide an answer before submitting.")
 
+    elif options == "Download Conversation":
+        st.header("Download Interview Transcript")
+        if "conversation" in st.session_state and st.session_state.conversation:
+            conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
+            st.download_button(label="Download Transcript", data=conversation_text, file_name="interview_transcript.txt", mime="text/plain")
+        else:
+            st.warning("No conversation available to download.")
+    
     elif options == "About":
         st.header("About This App")
         st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis. Using NLP, it delivers real-time insights into candidate communication and expertise, while a cultural fit scoring system evaluates alignment with organizational values. This scalable, AI-powered solution ensures faster, data-driven hiring decisions with improved precision.")
