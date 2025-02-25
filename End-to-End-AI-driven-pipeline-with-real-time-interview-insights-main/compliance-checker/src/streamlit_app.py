@@ -64,10 +64,18 @@ def upload_data():
             st.error(f"Error processing file: {e}")
     return None
 
+def query_database(query, database):
+    try:
+        filtered_data = database[database.apply(lambda row: row.astype(str).str.contains(query, case=False, na=False).any(), axis=1)]
+        return filtered_data
+    except Exception as e:
+        st.error(f"Error querying database: {e}")
+        return pd.DataFrame()
+
 def main():
     st.title("Contract Analysis System")
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Database", "Query Data", "About"])
 
     if options == "Home":
         st.header("Welcome to the Infosys Project Dashboard")
@@ -92,6 +100,17 @@ def main():
             else:
                 st.warning("No new data available to save!")
 
+    elif options == "Query Data":
+        st.header("Query the Database")
+        database = load_database()
+        query = st.text_input("Enter your query:")
+        if st.button("Search"):
+            if query:
+                results = query_database(query, database)
+                st.dataframe(results)
+            else:
+                st.warning("Please enter a query to search!")
+    
     elif options == "About":
         st.header("About This App")
         st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis. Using NLP, it delivers real-time insights into candidate communication and expertise, while a cultural fit scoring system evaluates alignment with organizational values. This scalable, AI-powered solution ensures faster, data-driven hiring decisions with improved precision.")
