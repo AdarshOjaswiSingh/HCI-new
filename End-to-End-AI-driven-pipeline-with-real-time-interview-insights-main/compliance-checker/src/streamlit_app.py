@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 import random
+from PyPDF2 import PdfReader
+from docx import Document
 
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
 CONVERSATION_HISTORY = []
@@ -10,7 +12,7 @@ def load_database():
     try:
         if os.path.exists(DB_PATH):
             df = pd.read_excel(DB_PATH)
-            df.columns = df.columns.str.strip()  # Remove leading/trailing spaces
+            df.columns = df.columns.str.strip()
             required_columns = ["Role", "Transcript"]
             if not all(col in df.columns for col in required_columns):
                 st.error("Database format is incorrect. Ensure it has 'Role' and 'Transcript' columns.")
@@ -18,7 +20,7 @@ def load_database():
             return df
         else:
             st.warning("Database not found! Initializing a new database.")
-            empty_df = pd.DataFrame(columns=["Role", "Transcript"])  # Ensure correct format
+            empty_df = pd.DataFrame(columns=["Role", "Transcript"])
             save_database(empty_df)
             return empty_df
     except Exception as e:
@@ -32,30 +34,40 @@ def save_database(data):
     except Exception as e:
         st.error(f"Failed to save the database: {e}")
 
-def ask_question(role):
+def extract_pdf_text(file):
     try:
-        database = load_database()
-        if not database.empty:
-            transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
-            if transcripts:
-                return random.choice(transcripts)
-            else:
-                return "No questions available for this role."
-        else:
-            return "Database is empty or incorrectly formatted."
+        reader = PdfReader(file)
+        return '\n'.join([page.extract_text() for page in reader.pages if page.extract_text()])
     except Exception as e:
-        st.error(f"Error fetching question: {e}")
+        st.error(f"Error reading PDF: {e}")
+        return ""
+
+def extract_word_text(file):
+    try:
+        doc = Document(file)
+        return '\n'.join([para.text for para in doc.paragraphs])
+    except Exception as e:
+        st.error(f"Error reading Word document: {e}")
         return ""
 
 def upload_data():
     st.header("Upload New Data")
-    uploaded_file = st.file_uploader("Upload a file (CSV, XLSX)", type=["csv", "xlsx"])
+    uploaded_file = st.file_uploader("Upload a file (CSV, XLSX, PDF, DOCX)", type=["csv", "xlsx", "pdf", "docx"])
     if uploaded_file:
         try:
             if uploaded_file.name.endswith(".csv"):
                 data = pd.read_csv(uploaded_file)
-            else:
+            elif uploaded_file.name.endswith(".xlsx"):
                 data = pd.read_excel(uploaded_file)
+            elif uploaded_file.name.endswith(".pdf"):
+                text = extract_pdf_text(uploaded_file)
+                data = pd.DataFrame([["Unknown", text]], columns=["Role", "Transcript"])
+            elif uploaded_file.name.endswith(".docx"):
+                text = extract_word_text(uploaded_file)
+                data = pd.DataFrame([["Unknown", text]], columns=["Role", "Transcript"])
+            else:
+                st.error("Unsupported file type!")
+                return
             
             if "Role" in data.columns and "Transcript" in data.columns:
                 save_database(data)
