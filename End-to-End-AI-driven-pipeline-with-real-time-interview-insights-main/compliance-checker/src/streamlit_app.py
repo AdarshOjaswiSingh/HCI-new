@@ -205,7 +205,7 @@ def main():
             
             # Separate download button for the resume summary
             if resume_summary_text:
-                st.download_button(label="Download Resume Summary Only", 
+                st.download_button(label="Download Resume Summary", 
                                    data=resume_summary_text, 
                                    file_name="resume_summary.txt", 
                                    mime="text/plain")
