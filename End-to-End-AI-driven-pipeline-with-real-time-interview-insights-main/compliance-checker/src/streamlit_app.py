@@ -187,15 +187,16 @@ def main():
             if st.session_state.resume_summary:
                 download_text += "\n\nResume Summary:\n" + st.session_state.resume_summary
                 
+            # Button for downloading the interview transcript with resume summary
             st.download_button(label="Download Transcript with Resume Summary", 
                                data=download_text, 
                                file_name="interview_transcript_with_resume_summary.txt", 
                                mime="text/plain")
             
-            # Option to download just the resume summary
+            # Separate download button for the resume summary
             if st.session_state.resume_summary:
                 resume_summary_text = "Resume Summary:\n" + st.session_state.resume_summary
-                st.download_button(label="Download Resume Summary", 
+                st.download_button(label="Download Resume Summary Only", 
                                    data=resume_summary_text, 
                                    file_name="resume_summary.txt", 
                                    mime="text/plain")
