@@ -127,7 +127,7 @@ def main():
     
     # Sidebar navigation
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Interview Mode", "Download Conversation", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Download Conversation", "About"])
 
     if options == "Home":
         st.header("Welcome to the Infosys Project Dashboard")
@@ -147,7 +147,7 @@ def main():
             upload_data()
 
         with col2:  # Interview Mode section (right side)
-            st.header("Interview Mode: Conversational Format")
+            st.header("Interview Mode:")
             database = load_database()
             roles = database["Role"].dropna().unique().tolist() if not database.empty else []
             if not roles:
