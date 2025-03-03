@@ -124,48 +124,60 @@ def main():
         st.session_state.transcripts = []
 
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
+    
+    # Sidebar navigation
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Download Conversation", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Interview Mode", "Download Conversation", "About"])
 
-    # Create two columns for data upload and interview mode side by side
-    col1, col2 = st.columns([1, 1])  # Create 2 columns (left and right)
+    if options == "Home":
+        st.header("Welcome to the Infosys Project Dashboard")
+        st.write("This app is designed to showcase the key features and outputs of my project.")
+        st.write("Use the sidebar to navigate through the app.")
 
-    with col1:  # Data Upload section (left side)
-        st.header("Upload Resume for Summary")
-        upload_data()
+    elif options == "About":
+        st.header("About This App")
+        st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis.")
+        st.write("Author: Adarsh Ojaswi Singh")
 
-    with col2:  # Interview Mode section (right side)
-        st.header("Interview Mode: Conversational Format")
-        database = load_database()
-        roles = database["Role"].dropna().unique().tolist() if not database.empty else []
-        if not roles:
-            roles = ["No roles available"]
-        role = st.selectbox("Select the role you are applying for:", roles)
-        
-        if st.button("Start Interview"):
-            if role and role != "No roles available":
-                st.session_state.role = role
-                st.session_state.conversation = []
-                st.session_state.transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
-                if st.session_state.transcripts:
-                    st.session_state.current_question = st.session_state.transcripts.pop(0)
-                    st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+    elif options == "Data Upload":
+        # Create two columns for data upload and interview mode side by side
+        col1, col2 = st.columns([1, 1])  # Create 2 columns (left and right)
 
-        if "current_question" in st.session_state:
-            st.write(f"**Interviewer:** {st.session_state.current_question}")
-            answer = st.text_area("Your Response:")
-            if st.button("Submit Answer"):
-                if answer.strip():
-                    st.session_state.conversation.append(("Candidate", answer))
+        with col1:  # Data Upload section (left side)
+            upload_data()
+
+        with col2:  # Interview Mode section (right side)
+            st.header("Interview Mode: Conversational Format")
+            database = load_database()
+            roles = database["Role"].dropna().unique().tolist() if not database.empty else []
+            if not roles:
+                roles = ["No roles available"]
+            role = st.selectbox("Select the role you are applying for:", roles)
+            
+            if st.button("Start Interview"):
+                if role and role != "No roles available":
+                    st.session_state.role = role
+                    st.session_state.conversation = []
+                    st.session_state.transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
                     if st.session_state.transcripts:
                         st.session_state.current_question = st.session_state.transcripts.pop(0)
                         st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
-                    else:
-                        st.success("Interview completed!")
-                else:
-                    st.warning("Please provide an answer before submitting.")
 
-    if options == "Download Conversation":
+            if "current_question" in st.session_state:
+                st.write(f"**Interviewer:** {st.session_state.current_question}")
+                answer = st.text_area("Your Response:")
+                if st.button("Submit Answer"):
+                    if answer.strip():
+                        st.session_state.conversation.append(("Candidate", answer))
+                        if st.session_state.transcripts:
+                            st.session_state.current_question = st.session_state.transcripts.pop(0)
+                            st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+                        else:
+                            st.success("Interview completed!")
+                    else:
+                        st.warning("Please provide an answer before submitting.")
+
+    elif options == "Download Conversation":
         st.header("Download Interview Transcript")
         if "conversation" in st.session_state and st.session_state.conversation:
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
@@ -180,11 +192,6 @@ def main():
                                mime="text/plain")
         else:
             st.warning("No conversation available to download.")
-    
-    elif options == "About":
-        st.header("About This App")
-        st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis.")
-        st.write("Author: Adarsh Ojaswi Singh")
 
 if __name__ == "__main__":
     main()
