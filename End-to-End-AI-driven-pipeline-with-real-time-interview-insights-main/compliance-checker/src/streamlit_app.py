@@ -198,7 +198,7 @@ def main():
                 download_text += "\n\nResume Summary:\n" + resume_summary_text
                 
             # Button for downloading the interview transcript with resume summary
-            st.download_button(label="Download Transcript with Resume Summary", 
+            st.download_button(label="Download Transcript", 
                                data=download_text, 
                                file_name="interview_transcript_with_resume_summary.txt", 
                                mime="text/plain")
