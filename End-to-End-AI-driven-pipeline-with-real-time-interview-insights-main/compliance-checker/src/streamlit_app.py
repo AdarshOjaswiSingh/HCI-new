@@ -6,7 +6,6 @@ from PyPDF2 import PdfReader
 from docx import Document
 
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
-CONVERSATION_HISTORY = []
 
 def extract_pdf_text(file):
     try:
