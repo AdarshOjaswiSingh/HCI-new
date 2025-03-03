@@ -114,20 +114,12 @@ def main():
     # Initialize session state for the first time
     if "resume_summary" not in st.session_state:
         st.session_state.resume_summary = None
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = []
-    if "role" not in st.session_state:
-        st.session_state.role = None
-    if "current_question" not in st.session_state:
-        st.session_state.current_question = None
-    if "transcripts" not in st.session_state:
-        st.session_state.transcripts = []
 
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
     
     # Sidebar navigation
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Interview Mode", "Download Conversation", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Download Conversation", "About"])
 
     if options == "Home":
         st.header("Welcome to the Infosys Project Dashboard")
@@ -140,77 +132,64 @@ def main():
         st.write("Author: Adarsh Ojaswi Singh")
 
     elif options == "Data Upload":
-        # Create two columns for data upload and interview mode side by side
-        col1, col2 = st.columns([1, 1])  # Create 2 columns (left and right)
+        # Data Upload section
+        st.header("Upload Resume for Summary")
+        uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, or Excel)", type=["pdf", "docx", "xlsx"])
+        
+        if uploaded_file:
+            try:
+                if uploaded_file.name.endswith(".pdf"):
+                    text = extract_pdf_text(uploaded_file)
+                    summary = extract_resume_details(text)
+                    st.session_state.resume_summary = summary
+                    st.subheader("Resume Summary")
+                    st.write(summary)
 
-        with col1:  # Data Upload section (left side)
-            upload_data()
+                elif uploaded_file.name.endswith(".docx"):
+                    text = extract_word_text(uploaded_file)
+                    summary = extract_resume_details(text)
+                    st.session_state.resume_summary = summary
+                    st.subheader("Resume Summary")
+                    st.write(summary)
 
-        with col2:  # Interview Mode section (right side)
-            st.header("Interview Mode: Conversational Format")
-            database = load_database()
-            roles = database["Role"].dropna().unique().tolist() if not database.empty else []
-            if not roles:
-                roles = ["No roles available"]
-            role = st.selectbox("Select the role you are applying for:", roles)
-            
-            if st.button("Start Interview"):
-                if role and role != "No roles available":
-                    st.session_state.role = role
-                    st.session_state.conversation = []
-                    st.session_state.transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
-                    if st.session_state.transcripts:
-                        st.session_state.current_question = st.session_state.transcripts.pop(0)
-                        st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+                elif uploaded_file.name.endswith(".xlsx"):
+                    df = pd.read_excel(uploaded_file)
+                    st.write("Data loaded successfully! Here is a preview of the first few rows:")
+                    st.dataframe(df.head())  # Display first 5 rows of the uploaded Excel file
+                    
+                    # Display some statistics about the data
+                    st.write("Data Overview:")
+                    st.write(f"Total rows: {len(df)}")
+                    st.write(f"Columns: {', '.join(df.columns)}")
+                    
+                    st.write("Note: You can also upload resumes (PDF or DOCX) for further analysis.")
+                    
+                else:
+                    st.error("Unsupported file type!")
+                    return
 
-            if "current_question" in st.session_state:
-                st.write(f"**Interviewer:** {st.session_state.current_question}")
-                answer = st.text_area("Your Response:")
-                if st.button("Submit Answer"):
-                    if answer.strip():
-                        st.session_state.conversation.append(("Candidate", answer))
-                        if st.session_state.transcripts:
-                            st.session_state.current_question = st.session_state.transcripts.pop(0)
-                            st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
-                        else:
-                            st.success("Interview completed!")
-                    else:
-                        st.warning("Please provide an answer before submitting.")
+            except Exception as e:
+                st.error(f"Error processing file: {e}")
 
     elif options == "Download Conversation":
         st.header("Download Interview Transcript and Resume Summary")
-        if "conversation" in st.session_state and st.session_state.conversation:
-            conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
-            
-            # Ensure resume_summary is a string
+        if "resume_summary" in st.session_state and st.session_state.resume_summary:
             resume_summary_text = ""
-            if st.session_state.resume_summary:
-                if isinstance(st.session_state.resume_summary, dict):
-                    # Convert the dictionary to a string format
-                    for section, content in st.session_state.resume_summary.items():
-                        resume_summary_text += f"{section}:\n{content}\n\n"
-                else:
-                    resume_summary_text = str(st.session_state.resume_summary)
-                
-            # Combine the resume summary and interview transcript
-            download_text = conversation_text
-            if resume_summary_text:
-                download_text += "\n\nResume Summary:\n" + resume_summary_text
-                
-            # Button for downloading the interview transcript with resume summary
-            st.download_button(label="Download Transcript with Resume Summary", 
-                               data=download_text, 
-                               file_name="interview_transcript_with_resume_summary.txt", 
-                               mime="text/plain")
+            if isinstance(st.session_state.resume_summary, dict):
+                # Convert the dictionary to a string format
+                for section, content in st.session_state.resume_summary.items():
+                    resume_summary_text += f"{section}:\n{content}\n\n"
+            else:
+                resume_summary_text = str(st.session_state.resume_summary)
             
-            # Separate download button for the resume summary
-            if resume_summary_text:
-                st.download_button(label="Download Resume Summary Only", 
-                                   data=resume_summary_text, 
-                                   file_name="resume_summary.txt", 
-                                   mime="text/plain")
+            # Button for downloading the resume summary
+            st.download_button(label="Download Resume Summary Only", 
+                               data=resume_summary_text, 
+                               file_name="resume_summary.txt", 
+                               mime="text/plain")
+
         else:
-            st.warning("No conversation available to download.")
+            st.warning("No resume summary available to download.")
 
 if __name__ == "__main__":
     main()
