@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-import random
 from PyPDF2 import PdfReader
 from docx import Document
 
@@ -112,6 +111,18 @@ def load_database():
         return pd.DataFrame()
 
 def main():
+    # Initialize session state for the first time
+    if "resume_summary" not in st.session_state:
+        st.session_state.resume_summary = None
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = []
+    if "role" not in st.session_state:
+        st.session_state.role = None
+    if "current_question" not in st.session_state:
+        st.session_state.current_question = None
+    if "transcripts" not in st.session_state:
+        st.session_state.transcripts = []
+
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
     st.sidebar.header("Navigation")
     options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Interview Mode", "Download Conversation", "About"])
@@ -161,7 +172,7 @@ def main():
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
             
             # Combine the resume summary and interview transcript
-            if "resume_summary" in st.session_state and st.session_state.resume_summary:
+            if st.session_state.resume_summary:
                 conversation_text += "\n\nResume Summary:\n" + st.session_state.resume_summary
                 
             st.download_button(label="Download Transcript with Resume Summary", 
