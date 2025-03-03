@@ -7,7 +7,6 @@ from docx import Document
 
 DB_PATH = "End-to-End-AI-driven-pipeline-with-real-time-interview-insights-main/compliance-checker/src/Adarsh_Generated_Candidate_Data.xlsx"
 CONVERSATION_HISTORY = []
-RESUME_SUMMARY = ""
 
 def extract_pdf_text(file):
     try:
@@ -58,7 +57,6 @@ def extract_resume_details(text):
     return formatted_output
 
 def upload_data():
-    global RESUME_SUMMARY
     st.header("Upload Resume for Summary")
     uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, or Excel)", type=["pdf", "docx", "xlsx"])
     
@@ -67,14 +65,14 @@ def upload_data():
             if uploaded_file.name.endswith(".pdf"):
                 text = extract_pdf_text(uploaded_file)
                 summary = extract_resume_details(text)
-                RESUME_SUMMARY = summary
+                st.session_state.resume_summary = summary
                 st.subheader("Resume Summary")
                 st.write(summary)
 
             elif uploaded_file.name.endswith(".docx"):
                 text = extract_word_text(uploaded_file)
                 summary = extract_resume_details(text)
-                RESUME_SUMMARY = summary
+                st.session_state.resume_summary = summary
                 st.subheader("Resume Summary")
                 st.write(summary)
                 
@@ -88,7 +86,6 @@ def upload_data():
                 st.write(f"Total rows: {len(df)}")
                 st.write(f"Columns: {', '.join(df.columns)}")
                 
-                # Optionally, you can add more statistics or filtering options based on the file type.
                 st.write("Note: You can also upload resumes (PDF or DOCX) for further analysis.")
                 
             else:
@@ -165,8 +162,8 @@ def main():
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
             
             # Combine the resume summary and interview transcript
-            if RESUME_SUMMARY:
-                conversation_text += "\n\nResume Summary:\n" + RESUME_SUMMARY
+            if "resume_summary" in st.session_state and st.session_state.resume_summary:
+                conversation_text += "\n\nResume Summary:\n" + st.session_state.resume_summary
                 
             st.download_button(label="Download Transcript with Resume Summary", 
                                data=conversation_text, 
