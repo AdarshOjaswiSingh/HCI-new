@@ -163,9 +163,15 @@ def main():
         st.header("Download Interview Transcript")
         if "conversation" in st.session_state and st.session_state.conversation:
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
+            
+            # Combine the resume summary and interview transcript
             if RESUME_SUMMARY:
                 conversation_text += "\n\nResume Summary:\n" + RESUME_SUMMARY
-            st.download_button(label="Download Transcript", data=conversation_text, file_name="interview_transcript.txt", mime="text/plain")
+                
+            st.download_button(label="Download Transcript with Resume Summary", 
+                               data=conversation_text, 
+                               file_name="interview_transcript_with_resume_summary.txt", 
+                               mime="text/plain")
         else:
             st.warning("No conversation available to download.")
     
