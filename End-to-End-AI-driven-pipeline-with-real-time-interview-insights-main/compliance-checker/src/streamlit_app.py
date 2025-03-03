@@ -73,7 +73,7 @@ def upload_data():
                 st.session_state.resume_summary = summary
                 st.subheader("Resume Summary")
                 st.write(summary)
-
+                
             elif uploaded_file.name.endswith(".xlsx"):
                 df = pd.read_excel(uploaded_file)
                 st.write("Data loaded successfully! Here is a preview of the first few rows:")
@@ -117,7 +117,7 @@ def main():
 
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
     
-    # Sidebar navigation (removed Interview Mode)
+    # Sidebar navigation
     st.sidebar.header("Navigation")
     options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Download Conversation", "About"])
 
