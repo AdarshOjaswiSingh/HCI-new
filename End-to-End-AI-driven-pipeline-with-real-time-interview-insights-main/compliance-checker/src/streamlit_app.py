@@ -60,21 +60,41 @@ def extract_resume_details(text):
 def upload_data():
     global RESUME_SUMMARY
     st.header("Upload Resume for Summary")
-    uploaded_file = st.file_uploader("Upload a file (PDF, DOCX)", type=["pdf", "docx"])
+    uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, or Excel)", type=["pdf", "docx", "xlsx"])
+    
     if uploaded_file:
         try:
             if uploaded_file.name.endswith(".pdf"):
                 text = extract_pdf_text(uploaded_file)
+                summary = extract_resume_details(text)
+                RESUME_SUMMARY = summary
+                st.subheader("Resume Summary")
+                st.write(summary)
+
             elif uploaded_file.name.endswith(".docx"):
                 text = extract_word_text(uploaded_file)
+                summary = extract_resume_details(text)
+                RESUME_SUMMARY = summary
+                st.subheader("Resume Summary")
+                st.write(summary)
+                
+            elif uploaded_file.name.endswith(".xlsx"):
+                df = pd.read_excel(uploaded_file)
+                st.write("Data loaded successfully! Here is a preview of the first few rows:")
+                st.dataframe(df.head())  # Display first 5 rows of the uploaded Excel file
+                
+                # Display some statistics about the data
+                st.write("Data Overview:")
+                st.write(f"Total rows: {len(df)}")
+                st.write(f"Columns: {', '.join(df.columns)}")
+                
+                # Optionally, you can add more statistics or filtering options based on the file type.
+                st.write("Note: You can also upload resumes (PDF or DOCX) for further analysis.")
+                
             else:
                 st.error("Unsupported file type!")
                 return
-            
-            summary = extract_resume_details(text)
-            RESUME_SUMMARY = summary
-            st.subheader("Resume Summary")
-            st.write(summary)
+
         except Exception as e:
             st.error(f"Error processing file: {e}")
 
