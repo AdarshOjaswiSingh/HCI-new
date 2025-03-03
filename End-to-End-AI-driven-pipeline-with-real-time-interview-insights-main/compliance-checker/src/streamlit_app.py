@@ -178,18 +178,27 @@ def main():
                         st.warning("Please provide an answer before submitting.")
 
     elif options == "Download Conversation":
-        st.header("Download Interview Transcript")
+        st.header("Download Interview Transcript and Resume Summary")
         if "conversation" in st.session_state and st.session_state.conversation:
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
             
             # Combine the resume summary and interview transcript
+            download_text = conversation_text
             if st.session_state.resume_summary:
-                conversation_text += "\n\nResume Summary:\n" + st.session_state.resume_summary
+                download_text += "\n\nResume Summary:\n" + st.session_state.resume_summary
                 
             st.download_button(label="Download Transcript with Resume Summary", 
-                               data=conversation_text, 
+                               data=download_text, 
                                file_name="interview_transcript_with_resume_summary.txt", 
                                mime="text/plain")
+            
+            # Option to download just the resume summary
+            if st.session_state.resume_summary:
+                resume_summary_text = "Resume Summary:\n" + st.session_state.resume_summary
+                st.download_button(label="Download Resume Summary", 
+                                   data=resume_summary_text, 
+                                   file_name="resume_summary.txt", 
+                                   mime="text/plain")
         else:
             st.warning("No conversation available to download.")
 
