@@ -125,17 +125,16 @@ def main():
 
     st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Interview Mode", "Download Conversation", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Download Conversation", "About"])
 
-    if options == "Home":
-        st.header("Welcome to the Infosys Project Dashboard")
-        st.write("This app is designed to showcase the key features and outputs of my project.")
-        st.write("Use the sidebar to navigate through the app.")
+    # Create two columns for data upload and interview mode side by side
+    col1, col2 = st.columns([1, 1])  # Create 2 columns (left and right)
 
-    elif options == "Data Upload":
+    with col1:  # Data Upload section (left side)
+        st.header("Upload Resume for Summary")
         upload_data()
-    
-    elif options == "Interview Mode":
+
+    with col2:  # Interview Mode section (right side)
         st.header("Interview Mode: Conversational Format")
         database = load_database()
         roles = database["Role"].dropna().unique().tolist() if not database.empty else []
@@ -166,7 +165,7 @@ def main():
                 else:
                     st.warning("Please provide an answer before submitting.")
 
-    elif options == "Download Conversation":
+    if options == "Download Conversation":
         st.header("Download Interview Transcript")
         if "conversation" in st.session_state and st.session_state.conversation:
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
