@@ -123,14 +123,14 @@ def main():
     if "transcripts" not in st.session_state:
         st.session_state.transcripts = []
 
-    st.title("End-to-End AI-Driven Recruitment Pipeline with Real-Time Insights")
+    st.title("The adaptive learning platform for dyslexic students!")
     
     # Sidebar navigation
     st.sidebar.header("Navigation")
     options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Download Conversation", "About"])
 
     if options == "Home":
-        st.header("Welcome to the Infosys Project Dashboard")
+        st.header("Welcome to the HCI Project Dashboard")
         st.write("This app is designed to showcase the key features and outputs of my project.")
         st.write("Use the sidebar to navigate through the app.")
 
@@ -147,14 +147,14 @@ def main():
             upload_data()
 
         with col2:  # Interview Mode section (right side)
-            st.header("Interview Mode:")
+            st.header("Study Mode:")
             database = load_database()
             roles = database["Role"].dropna().unique().tolist() if not database.empty else []
             if not roles:
                 roles = ["No roles available"]
             role = st.selectbox("Select the role you are applying for:", roles)
             
-            if st.button("Start Interview"):
+            if st.button("Start Cource"):
                 if role and role != "No roles available":
                     st.session_state.role = role
                     st.session_state.conversation = []
@@ -178,7 +178,7 @@ def main():
                         st.warning("Please provide an answer before submitting.")
 
     elif options == "Download Conversation":
-        st.header("Download Interview Transcript and Resume Summary")
+        st.header("Download Transcript and Book Summary")
         if "conversation" in st.session_state and st.session_state.conversation:
             conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
             
@@ -198,14 +198,14 @@ def main():
                 download_text += "\n\nResume Summary:\n" + resume_summary_text
                 
             # Button for downloading the interview transcript with resume summary
-            st.download_button(label="Download Transcript with Resume Summary", 
+            st.download_button(label="Download Transcript with Book Summary", 
                                data=download_text, 
                                file_name="interview_transcript_with_resume_summary.txt", 
                                mime="text/plain")
             
             # Separate download button for the resume summary
             if resume_summary_text:
-                st.download_button(label="Download Resume Summary Only", 
+                st.download_button(label="Download Summary Only", 
                                    data=resume_summary_text, 
                                    file_name="resume_summary.txt", 
                                    mime="text/plain")
