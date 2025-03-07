@@ -22,112 +22,28 @@ def extract_word_text(file):
         st.error(f"Error reading Word document: {e}")
         return ""
 
-def extract_resume_details(text):
-    """Extracts only Skills, Achievements, Experiences, and Projects."""
-    lines = text.split("\n")
-    
-    summary_sections = {
-        "Skills": ["Skills", "Technical Skills", "Core Competencies"],
-        "Achievements": ["Achievements", "Accomplishments", "Key Highlights"],
-        "Experience": ["Experience", "Work Experience", "Professional Experience"],
-        "Projects": ["Projects", "Key Projects", "Academic Projects"]
-    }
-    
-    extracted_info = {key: [] for key in summary_sections}
-    current_section = None
-    
-    for line in lines:
-        line = line.strip()
-        
-        for section, keywords in summary_sections.items():
-            if any(line.lower().startswith(keyword.lower()) for keyword in keywords):
-                current_section = section
-                break
-        else:
-            if current_section:
-                extracted_info[current_section].append(line)
-    
-    formatted_output = {key: "\n".join(value) for key, value in extracted_info.items() if value}
-    
-    if not formatted_output:
-        return "No structured data found. Please ensure your resume has clearly labeled sections."
-    
-    return formatted_output
-
-def upload_data():
-    st.header("Upload Book for Summary")
-    uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, or Excel)", type=["pdf", "docx", "xlsx"])
-    
-    if uploaded_file:
-        try:
-            if uploaded_file.name.endswith(".pdf"):
-                text = extract_pdf_text(uploaded_file)
-                summary = extract_resume_details(text)
-                st.session_state.resume_summary = summary
-                st.subheader("Resume Summary")
-                st.write(summary)
-
-            elif uploaded_file.name.endswith(".docx"):
-                text = extract_word_text(uploaded_file)
-                summary = extract_resume_details(text)
-                st.session_state.resume_summary = summary
-                st.subheader("Resume Summary")
-                st.write(summary)
-                
-            elif uploaded_file.name.endswith(".xlsx"):
-                df = pd.read_excel(uploaded_file)
-                st.write("Data loaded successfully! Here is a preview of the first few rows:")
-                st.dataframe(df.head())  # Display first 5 rows of the uploaded Excel file
-                
-                # Display some statistics about the data
-                st.write("Data Overview:")
-                st.write(f"Total rows: {len(df)}")
-                st.write(f"Columns: {', '.join(df.columns)}")
-                
-                st.write("Note: You can also upload resumes (PDF or DOCX) for further analysis.")
-                
-            else:
-                st.error("Unsupported file type!")
-                return
-
-        except Exception as e:
-            st.error(f"Error processing file: {e}")
-
 def load_database():
     try:
         if os.path.exists(DB_PATH):
             df = pd.read_excel(DB_PATH)
             df.columns = df.columns.str.strip()
-            required_columns = ["Role", "Transcript"]
+            required_columns = ["Summary", "Important Questions"]
             if not all(col in df.columns for col in required_columns):
-                st.error("Database format is incorrect. Ensure it has 'Role' and 'Transcript' columns.")
+                st.error("Database format is incorrect. Ensure it has 'Summary' and 'Important Questions' columns.")
                 return pd.DataFrame(columns=required_columns)
             return df
         else:
             st.warning("Database not found! Initializing a new database.")
-            return pd.DataFrame(columns=["Role", "Transcript"])
+            return pd.DataFrame(columns=["Summary", "Important Questions"])
     except Exception as e:
         st.error(f"Failed to load database: {e}")
         return pd.DataFrame()
 
 def main():
-    # Initialize session state for the first time
-    if "resume_summary" not in st.session_state:
-        st.session_state.resume_summary = None
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = []
-    if "role" not in st.session_state:
-        st.session_state.role = None
-    if "current_question" not in st.session_state:
-        st.session_state.current_question = None
-    if "transcripts" not in st.session_state:
-        st.session_state.transcripts = []
-
-    st.title("The adaptive learning platform for dyslexic students!")
+    st.title("The Adaptive Learning Platform for Dyslexic Students!")
     
-    # Sidebar navigation
     st.sidebar.header("Navigation")
-    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Download Conversation", "About"])
+    options = st.sidebar.radio("Select a page:", ["Home", "Data Upload", "Study Mode", "Download Study Material", "About"])
 
     if options == "Home":
         st.header("Welcome to the HCI Project Dashboard")
@@ -140,77 +56,68 @@ def main():
         st.write("Author: Adarsh Ojaswi Singh")
 
     elif options == "Data Upload":
-        # Create two columns for data upload and interview mode side by side
-        col1, col2 = st.columns([1, 1])  # Create 2 columns (left and right)
+        st.header("Upload Book for Summary")
+        uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, or Excel)", type=["pdf", "docx", "xlsx"])
+        
+        if uploaded_file:
+            try:
+                if uploaded_file.name.endswith(".pdf"):
+                    text = extract_pdf_text(uploaded_file)
+                    st.session_state.book_summary = text
+                    st.subheader("Extracted Book Summary")
+                    st.write(text)
 
-        with col1:  # Data Upload section (left side)
-            upload_data()
+                elif uploaded_file.name.endswith(".docx"):
+                    text = extract_word_text(uploaded_file)
+                    st.session_state.book_summary = text
+                    st.subheader("Extracted Book Summary")
+                    st.write(text)
+                    
+                elif uploaded_file.name.endswith(".xlsx"):
+                    df = pd.read_excel(uploaded_file)
+                    st.write("Data loaded successfully! Here is a preview of the first few rows:")
+                    st.dataframe(df.head())
+                else:
+                    st.error("Unsupported file type!")
+                    return
+            except Exception as e:
+                st.error(f"Error processing file: {e}")
 
-        with col2:  # Interview Mode section (right side)
-            st.header("Study Mode:")
-            database = load_database()
-            roles = database["Role"].dropna().unique().tolist() if not database.empty else []
-            if not roles:
-                roles = ["No roles available"]
-            role = st.selectbox("Select the role you are applying for:", roles)
+    elif options == "Study Mode":
+        st.header("Study Mode")
+        database = load_database()
+        if database.empty:
+            st.warning("No data available in the database.")
+        else:
+            summaries = database["Summary"].dropna().unique().tolist()
+            selected_summary = st.selectbox("Select a summary to study:", summaries)
             
-            if st.button("Start Cource"):
-                if role and role != "No roles available":
-                    st.session_state.role = role
-                    st.session_state.conversation = []
-                    st.session_state.transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
-                    if st.session_state.transcripts:
-                        st.session_state.current_question = st.session_state.transcripts.pop(0)
-                        st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+            if st.button("Start Study Session"):
+                st.session_state.study_session = selected_summary
+                st.session_state.questions = database[database["Summary"] == selected_summary]["Important Questions"].dropna().tolist()
+                st.session_state.current_question = st.session_state.questions.pop(0) if st.session_state.questions else None
+                st.session_state.conversation = [("System", f"Studying: {selected_summary}")]
 
-            if "current_question" in st.session_state:
-                st.write(f"**Interviewer:** {st.session_state.current_question}")
-                answer = st.text_area("Your Response:")
+            if "current_question" in st.session_state and st.session_state.current_question:
+                st.write(f"**Question:** {st.session_state.current_question}")
+                answer = st.text_area("Your Answer:")
                 if st.button("Submit Answer"):
                     if answer.strip():
-                        st.session_state.conversation.append(("Candidate", answer))
-                        if st.session_state.transcripts:
-                            st.session_state.current_question = st.session_state.transcripts.pop(0)
-                            st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+                        st.session_state.conversation.append(("User", answer))
+                        if st.session_state.questions:
+                            st.session_state.current_question = st.session_state.questions.pop(0)
                         else:
-                            st.success("Interview completed!")
+                            st.success("Study session completed!")
                     else:
                         st.warning("Please provide an answer before submitting.")
 
-    elif options == "Download Conversation":
-        st.header("Download Transcript and Book Summary")
+    elif options == "Download Study Material":
+        st.header("Download Study Material")
         if "conversation" in st.session_state and st.session_state.conversation:
-            conversation_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
-            
-            # Ensure resume_summary is a string
-            resume_summary_text = ""
-            if st.session_state.resume_summary:
-                if isinstance(st.session_state.resume_summary, dict):
-                    # Convert the dictionary to a string format
-                    for section, content in st.session_state.resume_summary.items():
-                        resume_summary_text += f"{section}:\n{content}\n\n"
-                else:
-                    resume_summary_text = str(st.session_state.resume_summary)
-                
-            # Combine the resume summary and interview transcript
-            download_text = conversation_text
-            if resume_summary_text:
-                download_text += "\n\nResume Summary:\n" + resume_summary_text
-                
-            # Button for downloading the interview transcript with resume summary
-            st.download_button(label="Download Transcript with Book Summary", 
-                               data=download_text, 
-                               file_name="interview_transcript_with_resume_summary.txt", 
-                               mime="text/plain")
-            
-            # Separate download button for the resume summary
-            if resume_summary_text:
-                st.download_button(label="Download Summary Only", 
-                                   data=resume_summary_text, 
-                                   file_name="resume_summary.txt", 
-                                   mime="text/plain")
+            study_text = "\n".join([f"{speaker}: {text}" for speaker, text in st.session_state.conversation])
+            st.download_button(label="Download Study Session", data=study_text, file_name="study_session.txt", mime="text/plain")
         else:
-            st.warning("No conversation available to download.")
+            st.warning("No study session available to download.")
 
 if __name__ == "__main__":
     main()
