@@ -55,7 +55,7 @@ def extract_resume_details(text):
     return formatted_output
 
 def upload_data():
-    st.header("Upload Resume for Summary")
+    st.header("Upload Book for Summary")
     uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, or Excel)", type=["pdf", "docx", "xlsx"])
     
     if uploaded_file:
@@ -136,7 +136,7 @@ def main():
 
     elif options == "About":
         st.header("About This App")
-        st.write("The End-to-End AI-Driven Recruitment Pipeline streamlines hiring by automating key processes like resume screening, skill assessment, and interview analysis.")
+        st.write("An AI-powered adaptive learning platform designed to personalize education for dyslexic students.")
         st.write("Author: Adarsh Ojaswi Singh")
 
     elif options == "Data Upload":
