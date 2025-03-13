@@ -155,13 +155,13 @@ def main():
             role = st.selectbox("Select the role you are applying for:", roles)
             
             if st.button("Start Cource"):
-                if role and role != "No roles available":
+                if role and role != "No available":
                     st.session_state.role = role
                     st.session_state.conversation = []
                     st.session_state.transcripts = database[database["Role"] == role]["Transcript"].dropna().tolist()
                     if st.session_state.transcripts:
                         st.session_state.current_question = st.session_state.transcripts.pop(0)
-                        st.session_state.conversation.append(("Interviewer", st.session_state.current_question))
+                        st.session_state.conversation.append(("Intervi", st.session_state.current_question))
 
             if "current_question" in st.session_state:
                 st.write(f"**Interviewer:** {st.session_state.current_question}")
