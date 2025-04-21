@@ -123,7 +123,7 @@ def main():
     if "transcripts" not in st.session_state:
         st.session_state.transcripts = []
 
-    st.title("The adaptive learning platform for dyslexic students!")
+    st.title("DIET OPTIMIZATION UING LINEAR PROGRAMMING ")
     
     # Sidebar navigation
     st.sidebar.header("Navigation")
